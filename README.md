@@ -1,6 +1,6 @@
 # 🎮 Tic-Tac-Toe - Modulo Core
 
-Questo modulo rappresenta il **cuore pulsante** del gioco Tic-Tac-Toe, includendo tutta la logica necessaria per le modalità **Giocatore vs Giocatore** e **Giocatore vs Computer**. Qui trovi tutto: dalla gestione dei giocatori alla visualizzazione della tabella di gioco, con controlli di vittoria e pareggio inclusi ✅❌.
+Questo modulo rappresenta il **cuore pulsante** del gioco Tic-Tac-Toe, includendo tutta la logica necessaria per le modalità **Giocatore vs Giocatore** e **Giocatore vs Computer**. Qui trovi tutto: dalla gestione dei giocatori alla visualizzazione della tabella di gioco, con controlli di vittoria e pareggio inclusi.
 
 ---
 
