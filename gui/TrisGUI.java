@@ -3,35 +3,52 @@ package gui;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import core.TabellaGioco;
-import core.PlayerVsPlayer.Players;
-import core.PlayersVsComputer.Players_PC;
+import java.awt.font.GlyphVector;
+import java.util.ArrayList;
+import java.util.Random;
 
 public class TrisGUI extends JFrame {
     private CardLayout cardLayout;
     private JPanel mainPanel;
     private GamePanel gamePanel;
     private MenuPanel menuPanel;
-    private Color primaryColor = new Color(41, 128, 185);
-    private Color secondaryColor = new Color(52, 152, 219);
-    private Color accentColor = new Color(231, 76, 60);
-    private Color successColor = new Color(46, 204, 113);
+    
+    // Colori tema dark moderno
+    private final Color primaryNeon = new Color(0, 255, 255);
+    private final Color secondaryNeon = new Color(255, 0, 255);
+    private final Color accentNeon = new Color(255, 255, 0);
+    private final Color glowRed = new Color(255, 69, 58);
+    private final Color glowBlue = new Color(10, 132, 255);
     
     public TrisGUI() {
-        setTitle("Tic-Tac-Toe Ultimate");
+        setTitle("NEON TRIS - Ultimate Edition");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setPreferredSize(new Dimension(800, 600));
+        setPreferredSize(new Dimension(900, 700));
+        setUndecorated(true); // Rimuove la barra del titolo per un look più moderno
         
-        // Imposta look and feel moderno
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // Rende la finestra trascinabile
+        addWindowDragListener();
         
         cardLayout = new CardLayout();
-        mainPanel = new JPanel(cardLayout);
-        mainPanel.setBackground(new Color(236, 240, 241));
+        mainPanel = new JPanel(cardLayout) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Gradiente di sfondo
+                GradientPaint gradient = new GradientPaint(
+                    0, 0, new Color(10, 10, 20),
+                    getWidth(), getHeight(), new Color(30, 10, 40)
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+                
+                // Particelle di sfondo
+                drawBackgroundParticles(g2d);
+            }
+        };
         
         menuPanel = new MenuPanel();
         gamePanel = new GamePanel();
@@ -46,640 +63,805 @@ public class TrisGUI extends JFrame {
         // Animazione iniziale
         SwingUtilities.invokeLater(() -> {
             setVisible(true);
-            animateStartup();
+            startBackgroundAnimation();
         });
     }
     
-    private void animateStartup() {
-        // Fade in effect
-        Timer timer = new Timer(20, new ActionListener() {
-            float currentAlpha = 0f;
-            
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                currentAlpha += 0.05f;
-                if (currentAlpha >= 1f) {
-                    currentAlpha = 1f;
-                    ((Timer)e.getSource()).stop();
-                }
-                mainPanel.setBackground(new Color(236, 240, 241, (int)(255 * currentAlpha)));
-                mainPanel.repaint();
+    private void addWindowDragListener() {
+        final Point[] mousePos = new Point[1];
+        
+        addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                mousePos[0] = e.getPoint();
             }
         });
-        timer.start();
+        
+        addMouseMotionListener(new MouseMotionAdapter() {
+            public void mouseDragged(MouseEvent e) {
+                Point currentPos = e.getLocationOnScreen();
+                setLocation(currentPos.x - mousePos[0].x, currentPos.y - mousePos[0].y);
+            }
+        });
+    }
+    
+    private ArrayList<Particle> particles = new ArrayList<>();
+    
+    private void startBackgroundAnimation() {
+        // Genera particelle iniziali
+        Random rand = new Random();
+        for (int i = 0; i < 50; i++) {
+            particles.add(new Particle(
+                rand.nextInt(getWidth()),
+                rand.nextInt(getHeight()),
+                rand.nextDouble() * 2 - 1,
+                rand.nextDouble() * 2 - 1,
+                rand.nextInt(3) + 1
+            ));
+        }
+        
+        Timer animTimer = new Timer(30, e -> {
+            // Aggiorna particelle
+            for (Particle p : particles) {
+                p.update(getWidth(), getHeight());
+            }
+            mainPanel.repaint();
+        });
+        animTimer.start();
+    }
+    
+    private void drawBackgroundParticles(Graphics2D g2d) {
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+        for (Particle p : particles) {
+            g2d.setColor(primaryNeon);
+            g2d.fillOval((int)p.x, (int)p.y, p.size, p.size);
+        }
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+    }
+    
+    // Classe per le particelle di sfondo
+    class Particle {
+        double x, y, vx, vy;
+        int size;
+        
+        Particle(double x, double y, double vx, double vy, int size) {
+            this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.size = size;
+        }
+        
+        void update(int maxX, int maxY) {
+            x += vx;
+            y += vy;
+            if (x < 0 || x > maxX) vx = -vx;
+            if (y < 0 || y > maxY) vy = -vy;
+        }
     }
     
     // Pannello Menu principale
     class MenuPanel extends JPanel {
-        private JLabel titleLabel;
-        private ModernButton pvpButton, pvcButton, exitButton;
-        
         public MenuPanel() {
             setLayout(new GridBagLayout());
-            setBackground(new Color(236, 240, 241));
+            setOpaque(false);
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.gridwidth = GridBagConstraints.REMAINDER;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.insets = new Insets(10, 50, 10, 50);
+            gbc.insets = new Insets(20, 50, 20, 50);
             
-            // Titolo con effetto gradiente
-            titleLabel = new JLabel("TIC-TAC-TOE", SwingConstants.CENTER) {
+            // Titolo con effetto neon
+            JLabel titleLabel = new JLabel("NEON TRIS") {
                 @Override
                 protected void paintComponent(Graphics g) {
                     Graphics2D g2d = (Graphics2D) g;
                     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                     
-                    GradientPaint gradient = new GradientPaint(
-                        0, 0, primaryColor,
-                        getWidth(), getHeight(), secondaryColor
-                    );
-                    g2d.setPaint(gradient);
-                    g2d.setFont(new Font("Arial", Font.BOLD, 48));
-                    
+                    String text = getText();
+                    g2d.setFont(new Font("Arial Black", Font.BOLD, 72));
                     FontMetrics fm = g2d.getFontMetrics();
-                    int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                    int x = (getWidth() - fm.stringWidth(text)) / 2;
                     int y = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
                     
-                    // Ombra
-                    g2d.setColor(new Color(0, 0, 0, 50));
-                    g2d.drawString(getText(), x + 3, y + 3);
+                    // Effetto glow neon
+                    for (int i = 10; i > 0; i--) {
+                        float alpha = 0.05f * (10 - i);
+                        g2d.setColor(new Color(0, 255, 255, (int)(255 * alpha)));
+                        g2d.setStroke(new BasicStroke(i * 2));
+                        
+                        // Crea il contorno del testo
+                        GlyphVector gv = g2d.getFont().createGlyphVector(g2d.getFontRenderContext(), text);
+                        Shape outline = gv.getOutline(x, y);
+                        g2d.draw(outline);
+                    }
                     
                     // Testo principale
-                    g2d.setPaint(gradient);
-                    g2d.drawString(getText(), x, y);
+                    g2d.setColor(Color.WHITE);
+                    g2d.drawString(text, x, y);
                 }
             };
-            titleLabel.setPreferredSize(new Dimension(400, 100));
+            titleLabel.setPreferredSize(new Dimension(500, 150));
             add(titleLabel, gbc);
             
-            // Spazio
-            gbc.insets = new Insets(30, 50, 10, 50);
-            add(Box.createVerticalStrut(20), gbc);
-            
-            // Bottoni
-            pvpButton = new ModernButton("Giocatore vs Giocatore", new Color(52, 152, 219));
-            pvpButton.addActionListener(e -> startPvPGame());
+            // Bottoni con effetto glassmorphism
             gbc.insets = new Insets(10, 100, 10, 100);
+            
+            NeonButton pvpButton = new NeonButton("PLAYER VS PLAYER", primaryNeon);
+            pvpButton.addActionListener(e -> {
+                gamePanel.initPvPGame();
+                cardLayout.show(mainPanel, "game");
+            });
             add(pvpButton, gbc);
             
-            pvcButton = new ModernButton("Giocatore vs Computer", new Color(46, 204, 113));
-            pvcButton.addActionListener(e -> startPvCGame());
+            NeonButton pvcButton = new NeonButton("PLAYER VS AI", secondaryNeon);
+            pvcButton.addActionListener(e -> {
+                gamePanel.initPvCGame();
+                cardLayout.show(mainPanel, "game");
+            });
             add(pvcButton, gbc);
             
-            exitButton = new ModernButton("Esci", new Color(231, 76, 60));
-            exitButton.addActionListener(e -> System.exit(0));
+            NeonButton exitButton = new NeonButton("EXIT", glowRed);
+            exitButton.addActionListener(e -> {
+                // Animazione di uscita
+                Timer exitTimer = new Timer(10, null);
+                exitTimer.addActionListener(new ActionListener() {
+                    float alpha = 1f;
+                    @Override
+                    public void actionPerformed(ActionEvent evt) {
+                        alpha -= 0.05f;
+                        if (alpha <= 0) {
+                            System.exit(0);
+                        }
+                        setOpacity(alpha);
+                    }
+                });
+                exitTimer.start();
+            });
             add(exitButton, gbc);
-        }
-        
-        private void startPvPGame() {
-            gamePanel.initPvPGame();
-            cardLayout.show(mainPanel, "game");
-        }
-        
-        private void startPvCGame() {
-            gamePanel.initPvCGame();
-            cardLayout.show(mainPanel, "game");
         }
     }
     
     // Pannello di gioco
     class GamePanel extends JPanel {
-        private JButton[][] buttons;
-        private TabellaGioco tabella;
+        private GameButton[][] buttons;
+        private char[][] board;
         private JLabel statusLabel;
-        private JLabel player1Label, player2Label;
+        private JPanel player1Panel, player2Panel;
+        private boolean isPlayerXTurn = true;
         private boolean isPvP;
-        private boolean isPlayerTurn = true;
-        private Players player1, player2;
-        private Players_PC playerPC1, playerPC2;
+        private String player1Name, player2Name;
+        private boolean gameOver = false;
         private Timer aiTimer;
         
         public GamePanel() {
             setLayout(new BorderLayout(20, 20));
-            setBackground(new Color(236, 240, 241));
-            setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            setOpaque(false);
+            setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
             
-            // Pannello superiore con info giocatori
-            JPanel topPanel = new JPanel(new BorderLayout());
-            topPanel.setOpaque(false);
+            // Header con info giocatori
+            JPanel headerPanel = new JPanel(new BorderLayout());
+            headerPanel.setOpaque(false);
             
-            player1Label = createPlayerLabel("Giocatore 1", Color.RED);
-            player2Label = createPlayerLabel("Giocatore 2", Color.BLUE);
+            player1Panel = createPlayerPanel("Player 1", glowRed, 'X');
+            player2Panel = createPlayerPanel("Player 2", glowBlue, 'O');
             
-            topPanel.add(player1Label, BorderLayout.WEST);
-            topPanel.add(player2Label, BorderLayout.EAST);
+            headerPanel.add(player1Panel, BorderLayout.WEST);
+            headerPanel.add(player2Panel, BorderLayout.EAST);
             
             // Status centrale
             statusLabel = new JLabel("", SwingConstants.CENTER);
             statusLabel.setFont(new Font("Arial", Font.BOLD, 24));
-            statusLabel.setForeground(primaryColor);
-            topPanel.add(statusLabel, BorderLayout.CENTER);
+            statusLabel.setForeground(Color.WHITE);
+            headerPanel.add(statusLabel, BorderLayout.CENTER);
             
-            add(topPanel, BorderLayout.NORTH);
+            add(headerPanel, BorderLayout.NORTH);
             
-            // Griglia di gioco
-            JPanel gridPanel = new JPanel(new GridLayout(3, 3, 10, 10));
-            gridPanel.setBackground(primaryColor);
-            gridPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(primaryColor, 5),
-                BorderFactory.createEmptyBorder(10, 10, 10, 10)
-            ));
+            // Griglia di gioco con effetto glassmorphism
+            JPanel gridContainer = new JPanel(new GridBagLayout());
+            gridContainer.setOpaque(false);
             
-            buttons = new JButton[3][3];
+            JPanel gridPanel = new JPanel(new GridLayout(3, 3, 15, 15)) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    
+                    // Effetto glassmorphism
+                    g2d.setColor(new Color(255, 255, 255, 10));
+                    g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 30, 30);
+                    
+                    // Bordo glow
+                    g2d.setStroke(new BasicStroke(2));
+                    g2d.setColor(new Color(0, 255, 255, 100));
+                    g2d.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 30, 30);
+                }
+            };
+            gridPanel.setOpaque(false);
+            gridPanel.setPreferredSize(new Dimension(400, 400));
+            gridPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            
+            buttons = new GameButton[3][3];
+            board = new char[3][3];
+            
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
-                    buttons[i][j] = createGameButton(i, j);
+                    board[i][j] = ' ';
+                    buttons[i][j] = new GameButton(i, j);
                     gridPanel.add(buttons[i][j]);
                 }
             }
             
-            add(gridPanel, BorderLayout.CENTER);
+            gridContainer.add(gridPanel);
+            add(gridContainer, BorderLayout.CENTER);
             
-            // Pannello inferiore con bottoni
-            JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
-            bottomPanel.setOpaque(false);
+            // Footer con bottoni
+            JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 10));
+            footerPanel.setOpaque(false);
             
-            ModernButton resetButton = new ModernButton("Nuova Partita", successColor);
+            NeonButton resetButton = new NeonButton("NEW GAME", accentNeon);
+            resetButton.setPreferredSize(new Dimension(150, 40));
             resetButton.addActionListener(e -> resetGame());
             
-            ModernButton menuButton = new ModernButton("Menu", accentColor);
+            NeonButton menuButton = new NeonButton("MENU", glowRed);
+            menuButton.setPreferredSize(new Dimension(150, 40));
             menuButton.addActionListener(e -> {
                 if (aiTimer != null) aiTimer.stop();
                 cardLayout.show(mainPanel, "menu");
             });
             
-            bottomPanel.add(resetButton);
-            bottomPanel.add(menuButton);
+            footerPanel.add(resetButton);
+            footerPanel.add(menuButton);
             
-            add(bottomPanel, BorderLayout.SOUTH);
+            add(footerPanel, BorderLayout.SOUTH);
         }
         
-        private JLabel createPlayerLabel(String name, Color color) {
-            JLabel label = new JLabel(name, SwingConstants.CENTER);
-            label.setFont(new Font("Arial", Font.BOLD, 18));
-            label.setForeground(color);
-            label.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(color, 2),
-                BorderFactory.createEmptyBorder(10, 20, 10, 20)
-            ));
-            label.setOpaque(true);
-            label.setBackground(Color.WHITE);
-            return label;
-        }
-        
-        private JButton createGameButton(int row, int col) {
-            JButton button = new JButton() {
+        private JPanel createPlayerPanel(String name, Color color, char symbol) {
+            JPanel panel = new JPanel() {
                 @Override
                 protected void paintComponent(Graphics g) {
                     super.paintComponent(g);
                     Graphics2D g2d = (Graphics2D) g;
                     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                     
-                    if (getText().equals("X")) {
-                        g2d.setColor(Color.RED);
-                        g2d.setStroke(new BasicStroke(8));
-                        int padding = 20;
-                        g2d.drawLine(padding, padding, getWidth() - padding, getHeight() - padding);
-                        g2d.drawLine(getWidth() - padding, padding, padding, getHeight() - padding);
-                    } else if (getText().equals("O")) {
-                        g2d.setColor(Color.BLUE);
-                        g2d.setStroke(new BasicStroke(8));
-                        int padding = 20;
-                        g2d.drawOval(padding, padding, getWidth() - 2*padding, getHeight() - 2*padding);
-                    }
+                    // Glassmorphism effect
+                    g2d.setColor(new Color(255, 255, 255, 20));
+                    g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                    
+                    // Bordo colorato
+                    g2d.setStroke(new BasicStroke(3));
+                    g2d.setColor(color);
+                    g2d.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 20, 20);
                 }
             };
+            panel.setOpaque(false);
+            panel.setPreferredSize(new Dimension(200, 80));
+            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+            panel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
             
-            button.setPreferredSize(new Dimension(120, 120));
-            button.setFont(new Font("Arial", Font.BOLD, 0)); // Font size 0 perché disegniamo custom
-            button.setBackground(Color.WHITE);
-            button.setFocusPainted(false);
-            button.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1));
-            button.setText("");
+            JLabel nameLabel = new JLabel(name);
+            nameLabel.setFont(new Font("Arial", Font.BOLD, 18));
+            nameLabel.setForeground(Color.WHITE);
+            nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             
-            // Effetto hover
-            button.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseEntered(MouseEvent e) {
-                    if (button.getText().isEmpty()) {
-                        button.setBackground(new Color(245, 245, 245));
-                        button.setBorder(BorderFactory.createLineBorder(primaryColor, 2));
-                    }
-                }
-                
-                @Override
-                public void mouseExited(MouseEvent e) {
-                    if (button.getText().isEmpty()) {
-                        button.setBackground(Color.WHITE);
-                        button.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1));
-                    }
-                }
-            });
+            JLabel symbolLabel = new JLabel("[ " + symbol + " ]");
+            symbolLabel.setFont(new Font("Arial", Font.BOLD, 24));
+            symbolLabel.setForeground(color);
+            symbolLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             
-            button.addActionListener(e -> handleButtonClick(row, col));
+            panel.add(Box.createVerticalGlue());
+            panel.add(nameLabel);
+            panel.add(symbolLabel);
+            panel.add(Box.createVerticalGlue());
             
-            return button;
+            return panel;
         }
         
         public void initPvPGame() {
             isPvP = true;
-            tabella = new TabellaGioco();
+            player1Name = JOptionPane.showInputDialog(this, "Nome Giocatore 1:", "Player 1");
+            player2Name = JOptionPane.showInputDialog(this, "Nome Giocatore 2:", "Player 2");
             
-            // Dialog per inserire i nomi
-            String name1 = JOptionPane.showInputDialog(this, "Nome Giocatore 1:", "Giocatore 1");
-            String name2 = JOptionPane.showInputDialog(this, "Nome Giocatore 2:", "Giocatore 2");
+            if (player1Name == null || player1Name.trim().isEmpty()) player1Name = "Player 1";
+            if (player2Name == null || player2Name.trim().isEmpty()) player2Name = "Player 2";
             
-            player1 = new Players(name1 != null ? name1 : "Giocatore 1");
-            player2 = new Players(name2 != null ? name2 : "Giocatore 2");
-            
-            player1.setSymbol('X');
-            player2.setSymbol('O');
-            
-            player1Label.setText(player1.getName() + " (X)");
-            player2Label.setText(player2.getName() + " (O)");
-            
+            updatePlayerPanels();
             resetGame();
-            updateStatus(player1.getName() + " inizia!");
         }
         
         public void initPvCGame() {
             isPvP = false;
-            tabella = new TabellaGioco();
+            player1Name = JOptionPane.showInputDialog(this, "Il tuo nome:", "Player");
+            player2Name = "AI Bot";
             
-            String name = JOptionPane.showInputDialog(this, "Il tuo nome:", "Giocatore");
+            if (player1Name == null || player1Name.trim().isEmpty()) player1Name = "Player";
             
-            playerPC1 = new Players_PC(name != null ? name : "Giocatore");
-            playerPC2 = new Players_PC("Computer");
-            
-            playerPC1.setSymbol('X');
-            playerPC2.setSymbol('O');
-            
-            player1Label.setText(playerPC1.getName() + " (X)");
-            player2Label.setText(playerPC2.getName() + " (O)");
-            
+            updatePlayerPanels();
             resetGame();
-            updateStatus(playerPC1.getName() + " inizia!");
         }
         
-        private void handleButtonClick(int row, int col) {
-            if (!buttons[row][col].getText().isEmpty()) return;
-            
-            if (isPvP) {
-                handlePvPMove(row, col);
-            } else {
-                handlePvCMove(row, col);
-            }
+        private void updatePlayerPanels() {
+            ((JLabel)player1Panel.getComponent(1)).setText(player1Name);
+            ((JLabel)player2Panel.getComponent(1)).setText(player2Name);
+            updateStatus(player1Name + " inizia!");
+            highlightCurrentPlayer();
         }
         
-        private void handlePvPMove(int row, int col) {
-            char currentSymbol = isPlayerTurn ? player1.getSymbol() : player2.getSymbol();
+        class GameButton extends JButton {
+            private int row, col;
+            private boolean isHovered = false;
             
-            if (tabella.inserisciSimbolo(row, col, currentSymbol)) {
-                animateMove(buttons[row][col], String.valueOf(currentSymbol));
+            GameButton(int row, int col) {
+                this.row = row;
+                this.col = col;
+                setContentAreaFilled(false);
+                setBorderPainted(false);
+                setFocusPainted(false);
+                setFont(new Font("Arial", Font.BOLD, 0));
+                setCursor(new Cursor(Cursor.HAND_CURSOR));
                 
-                if (checkWin(currentSymbol)) {
-                    String winner = isPlayerTurn ? player1.getName() : player2.getName();
-                    showWinAnimation(winner);
-                } else if (tabella.tabellaPiena()) {
-                    updateStatus("Pareggio!");
-                    disableAllButtons();
-                } else {
-                    isPlayerTurn = !isPlayerTurn;
-                    String nextPlayer = isPlayerTurn ? player1.getName() : player2.getName();
-                    updateStatus("Turno di " + nextPlayer);
-                    highlightCurrentPlayer();
+                addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseEntered(MouseEvent e) {
+                        if (board[row][col] == ' ' && !gameOver) {
+                            isHovered = true;
+                            repaint();
+                        }
+                    }
+                    
+                    @Override
+                    public void mouseExited(MouseEvent e) {
+                        isHovered = false;
+                        repaint();
+                    }
+                });
+                
+                addActionListener(e -> handleClick());
+            }
+            
+            private void handleClick() {
+                if (board[row][col] != ' ' || gameOver) return;
+                
+                if (isPvP || isPlayerXTurn) {
+                    makeMove(row, col);
                 }
             }
+            
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Sfondo glassmorphism
+                if (isHovered && board[row][col] == ' ') {
+                    g2d.setColor(new Color(255, 255, 255, 30));
+                } else {
+                    g2d.setColor(new Color(255, 255, 255, 10));
+                }
+                g2d.fillRoundRect(5, 5, getWidth()-10, getHeight()-10, 15, 15);
+                
+                // Bordo
+                g2d.setStroke(new BasicStroke(2));
+                g2d.setColor(new Color(255, 255, 255, 50));
+                g2d.drawRoundRect(5, 5, getWidth()-10, getHeight()-10, 15, 15);
+                
+                // Disegna simbolo con effetto neon
+                if (board[row][col] == 'X') {
+                    drawNeonX(g2d);
+                } else if (board[row][col] == 'O') {
+                    drawNeonO(g2d);
+                }
+            }
+            
+            private void drawNeonX(Graphics2D g2d) {
+                int padding = 25;
+                
+                // Glow effect
+                for (int i = 5; i > 0; i--) {
+                    g2d.setStroke(new BasicStroke(i * 3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                    g2d.setColor(new Color(255, 69, 58, 50 - i * 8));
+                    g2d.drawLine(padding, padding, getWidth() - padding, getHeight() - padding);
+                    g2d.drawLine(getWidth() - padding, padding, padding, getHeight() - padding);
+                }
+                
+                // Main X
+                g2d.setStroke(new BasicStroke(4, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g2d.setColor(Color.WHITE);
+                g2d.drawLine(padding, padding, getWidth() - padding, getHeight() - padding);
+                g2d.drawLine(getWidth() - padding, padding, padding, getHeight() - padding);
+            }
+            
+            private void drawNeonO(Graphics2D g2d) {
+                int padding = 20;
+                
+                // Glow effect
+                for (int i = 5; i > 0; i--) {
+                    g2d.setStroke(new BasicStroke(i * 3));
+                    g2d.setColor(new Color(10, 132, 255, 50 - i * 8));
+                    g2d.drawOval(padding, padding, getWidth() - 2*padding, getHeight() - 2*padding);
+                }
+                
+                // Main O
+                g2d.setStroke(new BasicStroke(4));
+                g2d.setColor(Color.WHITE);
+                g2d.drawOval(padding, padding, getWidth() - 2*padding, getHeight() - 2*padding);
+            }
+            
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(100, 100);
+            }
         }
         
-        private void handlePvCMove(int row, int col) {
-            if (!isPlayerTurn) return;
+        private void makeMove(int row, int col) {
+            char symbol = isPlayerXTurn ? 'X' : 'O';
+            board[row][col] = symbol;
+            buttons[row][col].repaint();
             
-            if (tabella.inserisciSimbolo(row, col, playerPC1.getSymbol())) {
-                animateMove(buttons[row][col], String.valueOf(playerPC1.getSymbol()));
+            // Effetto particella sulla mossa
+            createMoveEffect(buttons[row][col], symbol);
+            
+            if (checkWin(symbol)) {
+                String winner = isPlayerXTurn ? player1Name : player2Name;
+                gameOver = true;
+                showWinAnimation(winner);
+            } else if (isBoardFull()) {
+                gameOver = true;
+                updateStatus("Pareggio! 🤝");
+            } else {
+                isPlayerXTurn = !isPlayerXTurn;
+                highlightCurrentPlayer();
                 
-                if (checkWin(playerPC1.getSymbol())) {
-                    showWinAnimation(playerPC1.getName());
-                } else if (tabella.tabellaPiena()) {
-                    updateStatus("Pareggio!");
-                    disableAllButtons();
-                } else {
-                    isPlayerTurn = false;
-                    updateStatus("Turno del Computer...");
-                    highlightCurrentPlayer();
-                    
-                    // Ritardo per la mossa del computer
-                    aiTimer = new Timer(1000, e -> {
-                        makeComputerMove();
+                if (!isPvP && !isPlayerXTurn) {
+                    updateStatus("AI sta pensando...");
+                    aiTimer = new Timer(800, e -> {
+                        makeAIMove();
                         aiTimer.stop();
                     });
                     aiTimer.start();
+                } else {
+                    updateStatus("Turno di " + (isPlayerXTurn ? player1Name : player2Name));
                 }
             }
         }
         
-        private void makeComputerMove() {
-            // Trova una mossa valida random
-            int row, col;
-            do {
-                row = (int)(Math.random() * 3);
-                col = (int)(Math.random() * 3);
-            } while (!buttons[row][col].getText().isEmpty());
-            
-            tabella.inserisciSimbolo(row, col, playerPC2.getSymbol());
-            animateMove(buttons[row][col], String.valueOf(playerPC2.getSymbol()));
-            
-            if (checkWin(playerPC2.getSymbol())) {
-                showWinAnimation(playerPC2.getName());
-            } else if (tabella.tabellaPiena()) {
-                updateStatus("Pareggio!");
-                disableAllButtons();
-            } else {
-                isPlayerTurn = true;
-                updateStatus("Il tuo turno!");
-                highlightCurrentPlayer();
+        private void makeAIMove() {
+            // AI semplice: cerca prima di vincere, poi di bloccare, poi mossa casuale
+            Point move = findBestMove();
+            if (move != null) {
+                makeMove(move.x, move.y);
             }
         }
         
-        private void animateMove(JButton button, String symbol) {
-            button.setText(symbol);
-            
-            // Animazione di scala
-            Timer scaleTimer = new Timer(10, null);
-            scaleTimer.addActionListener(new ActionListener() {
-                float scale = 0.5f;
-                
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    scale += 0.1f;
-                    if (scale >= 1.0f) {
-                        scale = 1.0f;
-                        scaleTimer.stop();
+        private Point findBestMove() {
+            // Cerca mossa vincente per O
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (board[i][j] == ' ') {
+                        board[i][j] = 'O';
+                        if (checkWin('O')) {
+                            board[i][j] = ' ';
+                            return new Point(i, j);
+                        }
+                        board[i][j] = ' ';
                     }
-                    
-                    int size = (int)(120 * scale);
-                    button.setPreferredSize(new Dimension(size, size));
-                    button.revalidate();
-                    button.repaint();
-                }
-            });
-            scaleTimer.start();
-        }
-        
-        private void highlightCurrentPlayer() {
-            if (isPvP) {
-                if (isPlayerTurn) {
-                    player1Label.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(Color.RED, 4),
-                        BorderFactory.createEmptyBorder(10, 20, 10, 20)
-                    ));
-                    player2Label.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(Color.BLUE, 2),
-                        BorderFactory.createEmptyBorder(10, 20, 10, 20)
-                    ));
-                } else {
-                    player1Label.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(Color.RED, 2),
-                        BorderFactory.createEmptyBorder(10, 20, 10, 20)
-                    ));
-                    player2Label.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(Color.BLUE, 4),
-                        BorderFactory.createEmptyBorder(10, 20, 10, 20)
-                    ));
-                }
-            } else {
-                if (isPlayerTurn) {
-                    player1Label.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(Color.RED, 4),
-                        BorderFactory.createEmptyBorder(10, 20, 10, 20)
-                    ));
-                    player2Label.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(Color.BLUE, 2),
-                        BorderFactory.createEmptyBorder(10, 20, 10, 20)
-                    ));
-                } else {
-                    player1Label.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(Color.RED, 2),
-                        BorderFactory.createEmptyBorder(10, 20, 10, 20)
-                    ));
-                    player2Label.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(Color.BLUE, 4),
-                        BorderFactory.createEmptyBorder(10, 20, 10, 20)
-                    ));
                 }
             }
+            
+            // Blocca mossa vincente di X
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (board[i][j] == ' ') {
+                        board[i][j] = 'X';
+                        if (checkWin('X')) {
+                            board[i][j] = ' ';
+                            return new Point(i, j);
+                        }
+                        board[i][j] = ' ';
+                    }
+                }
+            }
+            
+            // Centro se libero
+            if (board[1][1] == ' ') return new Point(1, 1);
+            
+            // Angoli
+            int[][] corners = {{0,0}, {0,2}, {2,0}, {2,2}};
+            for (int[] corner : corners) {
+                if (board[corner[0]][corner[1]] == ' ') {
+                    return new Point(corner[0], corner[1]);
+                }
+            }
+            
+            // Qualsiasi mossa rimanente
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (board[i][j] == ' ') {
+                        return new Point(i, j);
+                    }
+                }
+            }
+            
+            return null;
         }
         
         private boolean checkWin(char symbol) {
-            String sym = String.valueOf(symbol);
-            
-            // Controlla righe
+            // Righe
             for (int i = 0; i < 3; i++) {
-                if (tabella.getTabella()[i][0].equals(sym) &&
-                    tabella.getTabella()[i][1].equals(sym) &&
-                    tabella.getTabella()[i][2].equals(sym)) {
-                    highlightWinningLine(i, 0, i, 1, i, 2);
+                if (board[i][0] == symbol && board[i][1] == symbol && board[i][2] == symbol) {
+                    highlightWinLine(i, 0, i, 2, true);
                     return true;
                 }
             }
             
-            // Controlla colonne
+            // Colonne
             for (int j = 0; j < 3; j++) {
-                if (tabella.getTabella()[0][j].equals(sym) &&
-                    tabella.getTabella()[1][j].equals(sym) &&
-                    tabella.getTabella()[2][j].equals(sym)) {
-                    highlightWinningLine(0, j, 1, j, 2, j);
+                if (board[0][j] == symbol && board[1][j] == symbol && board[2][j] == symbol) {
+                    highlightWinLine(0, j, 2, j, false);
                     return true;
                 }
             }
             
-            // Controlla diagonali
-            if (tabella.getTabella()[0][0].equals(sym) &&
-                tabella.getTabella()[1][1].equals(sym) &&
-                tabella.getTabella()[2][2].equals(sym)) {
-                highlightWinningLine(0, 0, 1, 1, 2, 2);
+            // Diagonali
+            if (board[0][0] == symbol && board[1][1] == symbol && board[2][2] == symbol) {
+                highlightWinLine(0, 0, 2, 2, false);
                 return true;
             }
             
-            if (tabella.getTabella()[0][2].equals(sym) &&
-                tabella.getTabella()[1][1].equals(sym) &&
-                tabella.getTabella()[2][0].equals(sym)) {
-                highlightWinningLine(0, 2, 1, 1, 2, 0);
+            if (board[0][2] == symbol && board[1][1] == symbol && board[2][0] == symbol) {
+                highlightWinLine(0, 2, 2, 0, false);
                 return true;
             }
             
             return false;
         }
         
-        private void highlightWinningLine(int r1, int c1, int r2, int c2, int r3, int c3) {
-            Color winColor = new Color(255, 215, 0); // Gold
-            buttons[r1][c1].setBackground(winColor);
-            buttons[r2][c2].setBackground(winColor);
-            buttons[r3][c3].setBackground(winColor);
-        }
-        
-        private void showWinAnimation(String winner) {
-            updateStatus(winner + " ha vinto! 🎉");
-            disableAllButtons();
-            
-            // Animazione di vittoria
-            Timer celebrationTimer = new Timer(100, null);
-            celebrationTimer.addActionListener(new ActionListener() {
+        private void highlightWinLine(int startRow, int startCol, int endRow, int endCol, boolean isRow) {
+            Timer highlightTimer = new Timer(100, null);
+            highlightTimer.addActionListener(new ActionListener() {
                 int count = 0;
-                Color[] colors = {Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.MAGENTA};
+                Color[] colors = {accentNeon, primaryNeon, secondaryNeon};
                 
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     count++;
-                    if (count > 10) {
-                        celebrationTimer.stop();
+                    if (count > 20) {
+                        highlightTimer.stop();
                         return;
                     }
                     
-                    statusLabel.setForeground(colors[count % colors.length]);
+                    if (isRow) {
+                        for (int j = startCol; j <= endCol; j++) {
+                            buttons[startRow][j].setBackground(colors[count % 3]);
+                        }
+                    } else if (startCol == endCol) {
+                        for (int i = startRow; i <= endRow; i++) {
+                            buttons[i][startCol].setBackground(colors[count % 3]);
+                        }
+                    } else {
+                        // Diagonale
+                        int rowStep = (endRow - startRow) / 2;
+                        int colStep = (endCol - startCol) / 2;
+                        for (int i = 0; i < 3; i++) {
+                            buttons[startRow + i*rowStep][startCol + i*colStep].setBackground(colors[count % 3]);
+                        }
+                    }
                 }
             });
-            celebrationTimer.start();
+            highlightTimer.start();
+        }
+        
+        private boolean isBoardFull() {
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (board[i][j] == ' ') return false;
+                }
+            }
+            return true;
+        }
+        
+        private void createMoveEffect(JButton button, char symbol) {
+            // Animazione di espansione
+            Timer effectTimer = new Timer(20, null);
+            effectTimer.addActionListener(new ActionListener() {
+                float scale = 0.8f;
+                
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    scale += 0.05f;
+                    if (scale >= 1.2f) {
+                        effectTimer.stop();
+                        
+                        // Torna alla dimensione normale
+                        Timer shrinkTimer = new Timer(20, evt -> {
+                            scale -= 0.05f;
+                            if (scale <= 1.0f) {
+                                ((Timer)evt.getSource()).stop();
+                            }
+                        });
+                        shrinkTimer.start();
+                    }
+                }
+            });
+            effectTimer.start();
+        }
+        
+        private void highlightCurrentPlayer() {
+            // Animazione sui pannelli giocatore
+            Timer pulseTimer = new Timer(50, null);
+            pulseTimer.addActionListener(new ActionListener() {
+                int alpha = 100;
+                boolean increasing = true;
+                int count = 0;
+                
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (increasing) {
+                        alpha += 10;
+                        if (alpha >= 255) {
+                            alpha = 255;
+                            increasing = false;
+                        }
+                    } else {
+                        alpha -= 10;
+                        if (alpha <= 100) {
+                            alpha = 100;
+                            count++;
+                            if (count >= 3) {
+                                pulseTimer.stop();
+                            }
+                            increasing = true;
+                        }
+                    }
+                    
+                    JPanel activePanel = isPlayerXTurn ? player1Panel : player2Panel;
+                    activePanel.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(255, 255, 255, alpha), 3),
+                        BorderFactory.createEmptyBorder(10, 20, 10, 20)
+                    ));
+                }
+            });
+            pulseTimer.start();
+        }
+        
+        private void showWinAnimation(String winner) {
+            updateStatus(winner + " VINCE! 🏆");
+            
+            // Effetto fuochi d'artificio
+            Timer fireworksTimer = new Timer(100, null);
+            fireworksTimer.addActionListener(new ActionListener() {
+                int count = 0;
+                
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    count++;
+                    if (count > 20) {
+                        fireworksTimer.stop();
+                        return;
+                    }
+                    
+                    // Cambia colore del testo status
+                    statusLabel.setForeground(new Color(
+                        (int)(Math.random() * 255),
+                        (int)(Math.random() * 255),
+                        (int)(Math.random() * 255)
+                    ));
+                }
+            });
+            fireworksTimer.start();
         }
         
         private void updateStatus(String message) {
             statusLabel.setText(message);
         }
         
-        private void disableAllButtons() {
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    buttons[i][j].setEnabled(false);
-                }
-            }
-        }
-        
         private void resetGame() {
-            tabella = new TabellaGioco();
-            isPlayerTurn = true;
+            gameOver = false;
+            isPlayerXTurn = true;
             
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
-                    buttons[i][j].setText("");
-                    buttons[i][j].setEnabled(true);
-                    buttons[i][j].setBackground(Color.WHITE);
-                    buttons[i][j].setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1));
-                    buttons[i][j].setPreferredSize(new Dimension(120, 120));
+                    board[i][j] = ' ';
+                    buttons[i][j].setBackground(null);
+                    buttons[i][j].repaint();
                 }
             }
             
-            if (isPvP) {
-                updateStatus(player1.getName() + " inizia!");
-            } else {
-                updateStatus(playerPC1.getName() + " inizia!");
-            }
-            
+            updateStatus(player1Name + " inizia!");
             highlightCurrentPlayer();
         }
     }
     
-    // Bottone moderno con effetti
-    class ModernButton extends JButton {
-        private Color baseColor;
-        private Color hoverColor;
-        private boolean isHovered = false;
+    // Bottone con effetto neon
+    class NeonButton extends JButton {
+        private Color neonColor;
+        private Timer pulseTimer;
+        private float glowIntensity = 0.5f;
+        private boolean increasing = true;
         
-        public ModernButton(String text, Color color) {
+        public NeonButton(String text, Color neonColor) {
             super(text);
-            this.baseColor = color;
-            this.hoverColor = color.brighter();
+            this.neonColor = neonColor;
             
-            setFont(new Font("Arial", Font.BOLD, 16));
+            setFont(new Font("Arial Black", Font.BOLD, 16));
             setForeground(Color.WHITE);
-            setBackground(baseColor);
+            setContentAreaFilled(false);
             setBorderPainted(false);
             setFocusPainted(false);
-            setContentAreaFilled(false);
-            setOpaque(true);
             setCursor(new Cursor(Cursor.HAND_CURSOR));
+            
+            // Animazione pulsante
+            pulseTimer = new Timer(50, e -> {
+                if (increasing) {
+                    glowIntensity += 0.05f;
+                    if (glowIntensity >= 1f) {
+                        glowIntensity = 1f;
+                        increasing = false;
+                    }
+                } else {
+                    glowIntensity -= 0.05f;
+                    if (glowIntensity <= 0.3f) {
+                        glowIntensity = 0.3f;
+                        increasing = true;
+                    }
+                }
+                repaint();
+            });
             
             addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
-                    isHovered = true;
-                    animateHover(true);
+                    pulseTimer.start();
                 }
                 
                 @Override
                 public void mouseExited(MouseEvent e) {
-                    isHovered = false;
-                    animateHover(false);
+                    pulseTimer.stop();
+                    glowIntensity = 0.5f;
+                    repaint();
                 }
                 
                 @Override
                 public void mousePressed(MouseEvent e) {
-                    setBackground(baseColor.darker());
-                }
-                
-                @Override
-                public void mouseReleased(MouseEvent e) {
-                    setBackground(isHovered ? hoverColor : baseColor);
+                    glowIntensity = 1f;
+                    repaint();
                 }
             });
-        }
-        
-        private void animateHover(boolean hover) {
-            Timer timer = new Timer(10, null);
-            timer.addActionListener(new ActionListener() {
-                float progress = 0;
-                
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    progress += 0.1f;
-                    if (progress >= 1.0f) {
-                        progress = 1.0f;
-                        timer.stop();
-                    }
-                    
-                    if (hover) {
-                        setBackground(interpolateColor(baseColor, hoverColor, progress));
-                    } else {
-                        setBackground(interpolateColor(hoverColor, baseColor, progress));
-                    }
-                }
-            });
-            timer.start();
-        }
-        
-        private Color interpolateColor(Color c1, Color c2, float ratio) {
-            int red = (int)(c1.getRed() * (1 - ratio) + c2.getRed() * ratio);
-            int green = (int)(c1.getGreen() * (1 - ratio) + c2.getGreen() * ratio);
-            int blue = (int)(c1.getBlue() * (1 - ratio) + c2.getBlue() * ratio);
-            return new Color(red, green, blue);
         }
         
         @Override
         protected void paintComponent(Graphics g) {
-            Graphics2D g2d = (Graphics2D) g.create();
+            Graphics2D g2d = (Graphics2D) g;
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             
-            // Ombra
-            g2d.setColor(new Color(0, 0, 0, 30));
-            g2d.fillRoundRect(2, 2, getWidth() - 4, getHeight() - 4, 15, 15);
+            // Glassmorphism background
+            g2d.setColor(new Color(255, 255, 255, 20));
+            g2d.fillRoundRect(5, 5, getWidth()-10, getHeight()-10, 25, 25);
             
-            // Sfondo
-            g2d.setColor(getBackground());
-            g2d.fillRoundRect(0, 0, getWidth() - 4, getHeight() - 4, 15, 15);
+            // Neon glow
+            for (int i = 5; i > 0; i--) {
+                int alpha = (int)(30 * glowIntensity * (5 - i) / 5);
+                g2d.setColor(new Color(neonColor.getRed(), neonColor.getGreen(), neonColor.getBlue(), alpha));
+                g2d.setStroke(new BasicStroke(i));
+                g2d.drawRoundRect(5, 5, getWidth()-10, getHeight()-10, 25, 25);
+            }
             
-            // Testo
-            g2d.setColor(getForeground());
+            // Bordo principale
+            g2d.setStroke(new BasicStroke(2));
+            g2d.setColor(neonColor);
+            g2d.drawRoundRect(5, 5, getWidth()-10, getHeight()-10, 25, 25);
+            
+            // Testo con ombra
             g2d.setFont(getFont());
             FontMetrics fm = g2d.getFontMetrics();
             int x = (getWidth() - fm.stringWidth(getText())) / 2;
             int y = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
-            g2d.drawString(getText(), x, y);
             
-            g2d.dispose();
+            // Ombra testo
+            g2d.setColor(new Color(0, 0, 0, 100));
+            g2d.drawString(getText(), x + 2, y + 2);
+            
+            // Testo principale
+            g2d.setColor(getForeground());
+            g2d.drawString(getText(), x, y);
         }
         
         @Override
         public Dimension getPreferredSize() {
-            return new Dimension(200, 50);
+            return new Dimension(250, 60);
         }
     }
     

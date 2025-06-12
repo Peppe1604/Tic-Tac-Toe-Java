@@ -1,132 +1,208 @@
-# 🎮 Tic-Tac-Toe - Modulo Core
+# 🎮 TIC-TAC-TOE ULTIMATE - Neon Edition
 
-Questo modulo rappresenta il **cuore pulsante** del gioco Tic-Tac-Toe, includendo tutta la logica necessaria per le modalità **Giocatore vs Giocatore** e **Giocatore vs Computer**. Qui trovi tutto: dalla gestione dei giocatori alla visualizzazione della tabella di gioco, con controlli di vittoria e pareggio inclusi.
+Un'implementazione moderna e accattivante del classico gioco del Tris con interfaccia grafica futuristica e modalità console tradizionale.
 
----
-
-## 📑 Indice
-
-1. [📌 Panoramica](#-panoramica)
-2. [📁 Struttura delle cartelle e dei file](#-struttura-delle-cartelle-e-dei-file)
-3. [📄 Descrizione dei file principali](#-descrizione-dei-file-principali)
-    - [🎨 ColorUtils.java](#-colorutilsjava)
-    - [📊 TabellaGioco.java](#-tabellagiocojava)
-    - [🚀 GameStartManagement.java](#-gamestartmanagementjava)
-    - [👥 PlayerVsPlayer/Players.java](#-playervsplayerplayersjava)
-    - [🆚 PlayerVsPlayer/GameStartPvsP.java](#-playervsplayergamestartpvspjava)
-    - [🤖 PlayersVsComputer/Players_PC.java](#-playersvscomputerplayers_pcjava)
-    - [🧠 PlayersVsComputer/GameStartPvsPc.java](#-playersvscomputergamestartpvspcjava)
-4. [💡 Motivazioni delle scelte progettuali](#-motivazioni-delle-scelte-progettuali)
+![Version](https://img.shields.io/badge/version-2.0-neon)
+![Java](https://img.shields.io/badge/Java-11+-orange)
+![GUI](https://img.shields.io/badge/GUI-Swing-cyan)
 
 ---
 
-## 📌 Panoramica
+## ✨ Caratteristiche Principali
 
-Il modulo `core` implementa tutta la logica di gioco del Tic-Tac-Toe, permettendo partite:
-- 👤 contro un altro giocatore umano
-- 🤖 contro il computer
+### 🌟 Interfaccia Grafica Ultra-Moderna
+- **Design Neon Futuristico**: Tema dark con effetti luminosi al neon
+- **Effetti Glassmorphism**: Trasparenze e sfocature per un look contemporaneo
+- **Animazioni Fluide**: Transizioni morbide e effetti particellari
+- **Responsive Design**: Si adatta a diverse dimensioni dello schermo
 
-Comprende:
-- Creazione e gestione dei giocatori
-- Visualizzazione dinamica e colorata della tabella
-- Controllo delle regole: vittoria, pareggio, turni
+### 🎯 Modalità di Gioco
+- **Player vs Player**: Sfida un amico locale
+- **Player vs AI**: Gioca contro un'intelligenza artificiale
+- **Modalità Console**: Versione classica a linea di comando
+
+### 🎨 Effetti Visivi
+- **Particelle Animate**: Sfondo dinamico con particelle fluttuanti
+- **Effetti Neon**: Simboli X e O con bagliore luminoso
+- **Animazioni di Vittoria**: Celebrazioni colorate quando qualcuno vince
+- **Highlight dei Turni**: Indicatore visivo pulsante del giocatore corrente
 
 ---
 
-## 📁 Struttura delle cartelle e dei file
+## 📁 Struttura del Progetto
 
 ```
-/core
-├── ColorUtils.java                  🎨 Gestione dei colori per la console
-├── TabellaGioco.java                📊 Tabella e stato del gioco
-├── GameStartManagement.java         🚀 Gestione del menu e avvio partita
-├── PlayerVsPlayer/
-│   ├── Players.java                 👥 Dati e input dei giocatori umani
-│   └── GameStartPvsP.java           🆚 Logica PvP (Player vs Player)
-└── PlayersVsComputer/
-    ├── Players_PC.java              👤🤖 Dati del giocatore e del computer
-    └── GameStartPvsPc.java          🧠 Logica PvC (Player vs Computer)
+/TicTacToe-Ultimate
+│
+├── Main.java                    🚀 Entry point (GUI/Console)
+├── README.md                    📖 Documentazione
+│
+├── /core                        💼 Logica di gioco
+│   ├── ColorUtils.java          🎨 Colori per console
+│   ├── TabellaGioco.java        📊 Gestione tabella
+│   ├── GameStartManagement.java 🎮 Manager partite
+│   ├── /PlayerVsPlayer          👥 Modalità PvP
+│   └── /PlayersVsComputer       🤖 Modalità PvC
+│
+└── /gui                         🖼️ Interfaccia grafica
+    └── TrisGUI.java            ✨ GUI Neon moderna
 ```
 
 ---
 
-## 📄 Descrizione dei file principali
+## 🚀 Come Iniziare
 
-### 🎨 ColorUtils.java
+### Prerequisiti
+- Java 11 o superiore
+- JDK installato nel sistema
 
-Gestisce colori e stili per migliorare l’interfaccia testuale:
-- Differenzia messaggi (info, errori, successi)
-- Colora simboli X e O
-- Migliora l’esperienza visiva in console 🌈
+### Compilazione
+```bash
+javac Main.java gui/TrisGUI.java core/*.java core/PlayerVsPlayer/*.java core/PlayersVsComputer/*.java
+```
 
----
+### Esecuzione
 
-### 📊 TabellaGioco.java
+**Modalità GUI (default):**
+```bash
+java Main
+```
 
-Gestisce la tabella 3x3:
-- Inizializzazione/reset tabella
-- Inserimento dei simboli (X/O)
-- Verifica se la tabella è piena
-- Stampa colorata e ordinata
-
----
-
-### 🚀 GameStartManagement.java
-
-Controlla l’avvio del gioco:
-- Mostra menu iniziale 📋
-- Consente scelta modalità (PvP o PvC)
-- Crea i giocatori
-- Avvia la modalità selezionata
+**Modalità Console:**
+```bash
+java Main --console
+```
 
 ---
 
-### 👥 PlayerVsPlayer/Players.java
+## 🎮 Come Giocare
 
-Gestisce i **giocatori umani**:
-- Nome e simbolo
-- Input da console
-- Metodi per lettura/scrittura delle informazioni
+### Interfaccia Grafica
+1. **Menu Principale**: Scegli tra Player vs Player o Player vs AI
+2. **Inserisci i Nomi**: Personalizza i nomi dei giocatori
+3. **Fai le Mosse**: Clicca sulle caselle per piazzare X o O
+4. **Vinci o Pareggia**: Allinea 3 simboli uguali per vincere!
 
----
-
-### 🆚 PlayerVsPlayer/GameStartPvsP.java
-
-Logica per la modalità **Player vs Player**:
-- Turni alternati
-- Richiesta mossa da console
-- Verifica vittoria o pareggio
-- Stampa risultato finale
+### Controlli
+- **Click**: Piazza il tuo simbolo
+- **New Game**: Ricomincia la partita
+- **Menu**: Torna al menu principale
+- **Exit**: Chiudi il gioco con animazione
 
 ---
 
-### 🤖 PlayersVsComputer/Players_PC.java
+## 🎨 Caratteristiche Tecniche GUI
 
-Gestisce i dati del giocatore **e del computer**:
-- Inserimento del nome del giocatore
-- Assegnazione automatica simboli
-- Preparazione al gioco
+### Design Elements
+- **Glassmorphism**: Effetti di trasparenza e blur
+- **Neon Glow**: Bagliori colorati dinamici
+- **Dark Theme**: Sfondo scuro per ridurre l'affaticamento visivo
+- **Particle System**: Sistema di particelle per lo sfondo animato
 
----
+### Animazioni
+- **Fade In/Out**: Transizioni morbide tra schermate
+- **Pulse Effects**: Effetti pulsanti per evidenziare elementi
+- **Move Animations**: Animazioni quando si piazzano i simboli
+- **Victory Celebration**: Effetti speciali per il vincitore
 
-### 🧠 PlayersVsComputer/GameStartPvsPc.java
-
-Logica della modalità **Player vs Computer**:
-- Turni alternati tra umano e AI
-- L’AI effettua **mosse casuali intelligenti**
-- Controllo condizioni di vittoria/pareggio
-- Output del risultato
-
----
-
-## 💡 Motivazioni delle scelte progettuali
-
-- 🎯 **Modularità**: separazione delle modalità PvP e PvC per semplificare la manutenzione.
-- 🌈 **ColorUtils**: migliora la leggibilità in console.
-- 🧩 **Tabella centralizzata**: evita duplicazioni, gestisce lo stato del gioco in modo chiaro.
-- 🛡️ **Input robusto**: l’utente viene guidato e protetto da errori di inserimento.
-- 🔄 **Facilità di estensione**: l’organizzazione dei file semplifica l’aggiunta di nuove funzionalità future.
+### AI Features
+- **Smart Moves**: L'AI cerca di vincere o bloccare
+- **Strategic Play**: Priorità a centro e angoli
+- **Realistic Delay**: Pausa pensiero per simulare riflessione
 
 ---
 
-📬 *Per segnalazioni, suggerimenti o collaborazioni, apri una issue o invia una pull request!*
+## 🛠️ Architettura
+
+### Core Module
+Gestisce tutta la logica di gioco, indipendente dall'interfaccia:
+- Validazione mosse
+- Controllo vittorie
+- Gestione turni
+- Stato della partita
+
+### GUI Module
+Interfaccia grafica moderna e reattiva:
+- Event-driven architecture
+- Swing components personalizzati
+- Timer-based animations
+- Custom painting per effetti
+
+---
+
+## 🔧 Personalizzazione
+
+### Modifica Colori Neon
+Nel file `TrisGUI.java`, puoi modificare i colori principali:
+```java
+private final Color primaryNeon = new Color(0, 255, 255);   // Cyan
+private final Color secondaryNeon = new Color(255, 0, 255);  // Magenta
+private final Color accentNeon = new Color(255, 255, 0);     // Yellow
+```
+
+### Velocità Animazioni
+Modifica i timer per animazioni più veloci/lente:
+```java
+Timer animTimer = new Timer(30, e -> {...});  // 30ms = ~33 FPS
+```
+
+---
+
+## 📈 Miglioramenti Futuri
+
+- [ ] **Multiplayer Online**: Gioca con amici remoti
+- [ ] **Livelli di Difficoltà AI**: Easy, Medium, Hard, Impossible
+- [ ] **Temi Personalizzabili**: Scegli tra diversi stili visivi
+- [ ] **Effetti Sonori**: Audio feedback per le azioni
+- [ ] **Statistiche**: Traccia vittorie e sconfitte
+- [ ] **Tornei**: Modalità torneo per più giocatori
+- [ ] **Salvataggio Partite**: Salva e riprendi le partite
+
+---
+
+## 🤝 Contributi
+
+Sentiti libero di contribuire al progetto! 
+1. Fork il repository
+2. Crea un branch per la tua feature
+3. Commit le modifiche
+4. Push al branch
+5. Apri una Pull Request
+
+---
+
+## 📝 Note Tecniche
+
+- **No dipendenze esterne**: Usa solo Java Swing standard
+- **Cross-platform**: Funziona su Windows, Mac, Linux
+- **Leggero**: Basso consumo di risorse
+- **Scalabile**: Architettura modulare facilmente estendibile
+
+---
+
+## 🎯 Screenshots
+
+### Menu Principale
+- Design neon futuristico
+- Bottoni con effetto glow
+- Particelle animate di sfondo
+
+### Gameplay
+- Griglia glassmorphism
+- Simboli con effetto neon
+- Indicatori di turno animati
+
+### Vittoria
+- Animazione celebrativa
+- Highlight della linea vincente
+- Effetti colorati
+
+---
+
+## 📬 Contatti
+
+Per segnalazioni bug, suggerimenti o collaborazioni, apri una issue su GitHub!
+
+---
+
+*Creato con ❤️ e tanto codice Java*
