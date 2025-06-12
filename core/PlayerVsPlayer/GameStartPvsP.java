@@ -1,4 +1,4 @@
-package core.PlaterVsPlayer;
+package core.PlayerVsPlayer;
 
 import core.ColorUtils;
 import core.TabellaGioco;

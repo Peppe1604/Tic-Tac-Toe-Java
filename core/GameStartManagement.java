@@ -1,6 +1,6 @@
 package core;
-import core.PlaterVsPlayer.GameStartPvsP;
-import core.PlaterVsPlayer.Players;
+import core.PlayerVsPlayer.GameStartPvsP;
+import core.PlayerVsPlayer.Players;
 import core.PlayersVsComputer.GameStartPvsPc;
 import core.PlayersVsComputer.Players_PC;
 

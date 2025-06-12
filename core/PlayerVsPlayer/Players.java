@@ -1,4 +1,4 @@
-package core.PlaterVsPlayer;
+package core.PlayerVsPlayer;
 
 import static java.lang.System.*;
 
