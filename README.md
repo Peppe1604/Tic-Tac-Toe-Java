@@ -205,4 +205,16 @@ For bug reports, suggestions or collaborations, open an issue on GitHub!
 
 ---
 
-*Created with ❤️ and lots of Java code*
+## What I practiced
+
+- Object-oriented programming
+- Encapsulation
+- Classes and interfaces
+- Game/application logic
+- Modular Java project organization
+
+## AI-assisted development
+
+The core Java programming and game logic were developed as a learning exercise. AI tools were mainly used later to reorganize and improve the graphical/interface part of the project.
+
+---
